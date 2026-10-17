@@ -62,14 +62,14 @@ export function BookPill() {
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="Book"
-      className="invisible fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-1/2 z-[45] flex translate-x-1/2 items-center gap-3 rounded-full bg-ink py-2 pl-2 pr-5 text-sm font-medium text-canvas shadow-[0_18px_50px_-20px_rgb(0_0_0/0.45)] sm:right-[var(--gutter)] sm:translate-x-0"
+      className="invisible fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] right-1/2 z-[45] flex translate-x-1/2 items-center gap-2.5 rounded-full bg-ink py-1.5 pl-1.5 pr-4 text-sm font-medium text-canvas shadow-[0_18px_50px_-20px_rgb(0_0_0/0.45)] sm:right-[var(--gutter)] sm:translate-x-0 sm:gap-3 sm:py-2 sm:pl-2 sm:pr-5"
     >
-      <span className="grid size-9 place-items-center rounded-full bg-sage text-night">
+      <span className="grid size-8 place-items-center rounded-full bg-sage text-night sm:size-9">
         <span className="size-2 animate-pulse-dot rounded-full bg-night" aria-hidden="true" />
       </span>
       <span>
         Book now
-        <span className="block text-[0.7rem] font-normal opacity-60">Next availability on Fresha</span>
+        <span className="hidden text-[0.7rem] font-normal opacity-60 sm:block">Next availability on Fresha</span>
       </span>
       <ArrowUpRight size={16} className="ml-1" />
     </a>

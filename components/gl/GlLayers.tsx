@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type MutableRefObject, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { useGlEntry } from "@/lib/gl/useGlEntry";
 import type { GlState } from "@/lib/gl/registry";
 import { cn } from "@/lib/cn";
@@ -17,7 +17,7 @@ type LayerProps = {
  * Hero silk surface. Shows an animated CSS gradient until the WebGL silk has
  * rendered its first frame (and permanently when WebGL is unavailable).
  */
-export function GlSilk({ className, radius = 0, stateRef }: LayerProps) {
+export function GlSilk({ className, radius, stateRef }: LayerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
   useGlEntry("silk", ref, { radius, stateRef, onReady: () => setActive(true) });
@@ -27,7 +27,7 @@ export function GlSilk({ className, radius = 0, stateRef }: LayerProps) {
       <div
         className="absolute inset-0 transition-opacity duration-1000 ease-glide"
         style={{
-          borderRadius: radius,
+          borderRadius: "inherit",
           opacity: active ? 0 : 1,
           backgroundImage:
             "radial-gradient(60% 70% at 18% 30%, color-mix(in oklab, var(--sage) 70%, transparent), transparent 70%), radial-gradient(55% 60% at 82% 70%, color-mix(in oklab, var(--blush) 75%, transparent), transparent 70%), radial-gradient(70% 60% at 60% 10%, var(--sand), transparent 70%), linear-gradient(120deg, var(--canvas), var(--sand))",
@@ -39,10 +39,14 @@ export function GlSilk({ className, radius = 0, stateRef }: LayerProps) {
   );
 }
 
-/** Area the lash-line particles are drawn into. */
-export function GlParticles({ className, stateRef }: LayerProps) {
+/** Area the lash-line particles are drawn into; `revealed` draws them in. */
+export function GlParticles({ className, stateRef, revealed = true }: LayerProps & { revealed?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  useGlEntry("particles", ref, { stateRef });
+  const state = useGlEntry("particles", ref, { stateRef });
+  // Runs after registration on every render, so late registration still reveals.
+  useEffect(() => {
+    if (state.current) state.current.reveal = revealed ? 1 : 0;
+  });
   return <div ref={ref} aria-hidden="true" className={cn("pointer-events-none absolute", className)} />;
 }
 

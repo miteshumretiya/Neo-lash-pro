@@ -37,7 +37,7 @@ export function SilkPlane({ entry, lowPower }: { entry: GlEntry; lowPower: boole
         uHover: { value: 0 },
         uProgress: { value: 0 },
         uRadius: { value: entry.radius },
-        uDetail: { value: lowPower ? 3 : 4 },
+        uDetail: { value: lowPower ? 2 : 3 },
         uBase: { value: new Color(c.base) },
         uSage: { value: new Color(c.sage) },
         uBlush: { value: new Color(c.blush) },

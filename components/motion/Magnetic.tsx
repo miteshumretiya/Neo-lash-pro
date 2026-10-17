@@ -55,7 +55,7 @@ export function Magnetic({ children, className, strength = 0.32, labelStrength =
   );
 
   return (
-    <span ref={ref} className={cn("inline-flex will-change-transform", className)}>
+    <span ref={ref} className={cn("will-change-transform", className || "inline-flex")}>
       {children}
     </span>
   );

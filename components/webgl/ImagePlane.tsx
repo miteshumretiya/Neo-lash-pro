@@ -44,6 +44,18 @@ export function ImagePlane({ entry }: { entry: GlEntry }) {
     return { material, texture };
   }, [entry]);
 
+  // Product shots only blend into the tile in the light theme.
+  useEffect(() => {
+    const apply = () => {
+      const dark = document.documentElement.dataset.theme === "dark";
+      material.uniforms.uUseTint.value = entry.tint && !dark ? 1 : 0;
+    };
+    apply();
+    const mo = new MutationObserver(apply);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => mo.disconnect();
+  }, [entry, material]);
+
   useEffect(() => {
     const img = entry.img;
     if (!img) return;

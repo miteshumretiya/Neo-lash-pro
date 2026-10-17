@@ -2,36 +2,49 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, PerspectiveCamera, RenderTexture } from "@react-three/drei";
-import { ExtrudeGeometry, MathUtils, Shape, Vector3, type Group, type Mesh } from "three";
+import { PerspectiveCamera, RenderTexture } from "@react-three/drei";
+import { ExtrudeGeometry, MathUtils, PMREMGenerator, Shape, Vector3, type Group, type Mesh } from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { pointer, type GlEntry } from "@/lib/gl/registry";
 import { syncToElement } from "./sync";
 
 const LENGTH = 3.4;
 
-/** One tapered tweezer arm; the last fifth curves into a fine tip. */
-function createArm(bend: number) {
+const smooth = (a: number, b: number, x: number) => {
+  const t = MathUtils.clamp((x - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+/**
+ * One tapered tweezer arm; the last fifth curves into a fine tip. `side`
+ * bows the arm away from its twin: joined at the back, widest at three
+ * quarters, closing again toward the tips.
+ */
+function createArm(bend: number, side: 1 | -1) {
   const shape = new Shape();
-  shape.moveTo(0, -0.17);
-  shape.bezierCurveTo(LENGTH * 0.45, -0.15, LENGTH * 0.78, -0.09, LENGTH, -0.022);
-  shape.lineTo(LENGTH, 0.022);
-  shape.bezierCurveTo(LENGTH * 0.78, 0.09, LENGTH * 0.45, 0.15, 0, 0.17);
+  shape.moveTo(0, -0.14);
+  shape.bezierCurveTo(LENGTH * 0.4, -0.15, LENGTH * 0.72, -0.08, LENGTH, -0.016);
+  shape.lineTo(LENGTH, 0.016);
+  shape.bezierCurveTo(LENGTH * 0.72, 0.08, LENGTH * 0.4, 0.15, 0, 0.14);
   shape.closePath();
   const geometry = new ExtrudeGeometry(shape, {
-    depth: 0.06,
+    depth: 0.03,
     bevelEnabled: true,
-    bevelThickness: 0.018,
-    bevelSize: 0.014,
+    bevelThickness: 0.012,
+    bevelSize: 0.01,
     bevelSegments: 3,
     curveSegments: 40,
     steps: 1,
   });
-  geometry.translate(0, 0, -0.03);
+  geometry.translate(0, 0, -0.015);
   const pos = geometry.attributes.position;
   const v = new Vector3();
   const pivot = LENGTH * 0.76;
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
+    const t = v.x / LENGTH;
+    v.z += side * (0.028 + 0.2 * smooth(0, 0.75, t) * (1 - 0.4 * smooth(0.75, 1, t)));
+    pos.setZ(i, v.z);
     if (v.x > pivot) {
       const t = (v.x - pivot) / (LENGTH - pivot);
       const angle = -bend * t * t;
@@ -46,16 +59,35 @@ function createArm(bend: number) {
   return geometry;
 }
 
+/** Procedural studio reflections (no HDR download needed). */
+function StudioEnvironment() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  useEffect(() => {
+    const pmrem = new PMREMGenerator(gl);
+    const env = pmrem.fromScene(new RoomEnvironment(), 0.035).texture;
+    scene.environment = env;
+    return () => {
+      scene.environment = null;
+      env.dispose();
+      pmrem.dispose();
+    };
+  }, [gl, scene]);
+  return null;
+}
+
 function Tweezers({ entry }: { entry: GlEntry }) {
   const group = useRef<Group>(null);
-  const arm = useMemo(() => createArm(0.85), []);
+  const arms = useMemo(() => [createArm(0.9, 1), createArm(0.9, -1)], []);
   const tilt = useRef({ x: 0, y: 0 });
 
-  useEffect(() => () => arm.dispose(), [arm]);
+  useEffect(() => () => arms.forEach((a) => a.dispose()), [arms]);
+
+  const roll = useRef<Group>(null);
 
   useFrame((state, delta) => {
     const g = group.current;
-    if (!g) return;
+    if (!g || !roll.current) return;
     const t = state.clock.elapsedTime;
     const rect = entry.el.getBoundingClientRect();
     const nx = pointer.active ? (pointer.x - (rect.left + rect.width / 2)) / rect.width : 0;
@@ -63,25 +95,33 @@ function Tweezers({ entry }: { entry: GlEntry }) {
     const k = 1 - Math.pow(0.01, delta);
     tilt.current.x += (MathUtils.clamp(ny, -0.6, 0.6) * 0.35 - tilt.current.x) * k;
     tilt.current.y += (MathUtils.clamp(nx, -0.6, 0.6) * 0.5 - tilt.current.y) * k;
-    // Scroll drives the main rotation; idle float keeps it alive at rest.
-    g.rotation.y = entry.state.progress * Math.PI * 1.6 - 0.6 + tilt.current.y + Math.sin(t * 0.4) * 0.08;
-    g.rotation.x = 0.35 + tilt.current.x + Math.sin(t * 0.6) * 0.04;
-    g.rotation.z = -0.55;
-    g.position.y = Math.sin(t * 0.8) * 0.06;
+    // Scroll rolls the tweezers around their length; the pointer tilts them.
+    roll.current.rotation.x = 1.1 + entry.state.progress * Math.PI * 2 + Math.sin(t * 0.5) * 0.12;
+    g.rotation.y = -0.35 + tilt.current.y;
+    g.rotation.x = tilt.current.x;
+    g.position.y = Math.sin(t * 0.8) * 0.05;
   });
+
+  const metal = {
+    color: "#c99683",
+    metalness: 0.92,
+    roughness: 0.26,
+    clearcoat: 0.6,
+    clearcoatRoughness: 0.2,
+    anisotropy: 0.7,
+  } as const;
 
   return (
     <group ref={group}>
-      <mesh geometry={arm} position={[0, 0, 0.13]} rotation={[0, 0.03, 0]}>
-        <meshPhysicalMaterial color="#c4917a" metalness={1} roughness={0.26} clearcoat={0.4} clearcoatRoughness={0.3} />
-      </mesh>
-      <mesh geometry={arm} position={[0, 0, -0.13]} rotation={[0, -0.03, 0]}>
-        <meshPhysicalMaterial color="#c4917a" metalness={1} roughness={0.26} clearcoat={0.4} clearcoatRoughness={0.3} />
-      </mesh>
-      <mesh position={[-LENGTH / 2 - 0.05, 0, 0]}>
-        <boxGeometry args={[0.32, 0.36, 0.34]} />
-        <meshPhysicalMaterial color="#b9826a" metalness={1} roughness={0.32} />
-      </mesh>
+      <group rotation={[0, 0, 0.62]}>
+        <group ref={roll}>
+          {arms.map((geometry, i) => (
+            <mesh key={i} geometry={geometry}>
+              <meshPhysicalMaterial {...metal} />
+            </mesh>
+          ))}
+        </group>
+      </group>
     </group>
   );
 }
@@ -90,38 +130,34 @@ function Tweezers({ entry }: { entry: GlEntry }) {
 export function ProductStage({ entry }: { entry: GlEntry }) {
   const mesh = useRef<Mesh>(null);
   const size = useThree((s) => s.size);
-  const dpr = useThree((s) => s.viewport.dpr);
-  const [box, setBox] = useState<{ w: number; h: number; on: boolean }>({ w: 640, h: 640, on: false });
+  // Size in CSS pixels; RenderTexture applies the device pixel ratio itself.
+  const [box, setBox] = useState<{ w: number; h: number; on: boolean }>({ w: 512, h: 512, on: false });
 
   useFrame(() => {
     if (!mesh.current) return;
     const { rect, visible } = syncToElement(mesh.current, entry.el, size, 150);
-    const w = Math.min(1400, Math.round(rect.width * dpr));
-    const h = Math.min(1400, Math.round(rect.height * dpr));
-    if (visible !== box.on || (visible && (Math.abs(w - box.w) > 48 || Math.abs(h - box.h) > 48))) {
+    const w = Math.min(900, Math.round(rect.width));
+    const h = Math.min(900, Math.round(rect.height));
+    if (visible !== box.on || (visible && (Math.abs(w - box.w) > 32 || Math.abs(h - box.h) > 32))) {
       setBox({ w: Math.max(64, w), h: Math.max(64, h), on: visible });
       if (visible) requestAnimationFrame(() => entry.onReady?.());
     }
   });
 
+  // The texture stays attached (so the material compiles with a map); it only
+  // re-renders while the stage is on screen.
   return (
     <mesh ref={mesh} renderOrder={3}>
       <planeGeometry args={[1, 1]} />
       <meshBasicMaterial transparent toneMapped={false} depthWrite={false}>
-        {box.on && (
-          <RenderTexture attach="map" width={box.w} height={box.h} samples={4}>
-            <PerspectiveCamera makeDefault position={[0, 0, 6.2]} fov={32} aspect={box.w / box.h} />
-            <ambientLight intensity={0.35} />
-            <directionalLight position={[3, 4, 5]} intensity={1.4} />
-            <Environment resolution={128} frames={1}>
-              <Lightformer form="rect" intensity={3} position={[0, 4, 3]} scale={[9, 2.4, 1]} />
-              <Lightformer form="rect" intensity={1.6} position={[-5, 0.5, 2]} rotation-y={Math.PI / 2} scale={[3, 7, 1]} />
-              <Lightformer form="circle" intensity={1.4} color="#d9b8ae" position={[4, -1.5, 3]} scale={3} />
-              <Lightformer form="rect" intensity={0.8} color="#97a9a8" position={[0, -4, -2]} scale={[9, 2, 1]} />
-            </Environment>
-            <Tweezers entry={entry} />
-          </RenderTexture>
-        )}
+        <RenderTexture attach="map" width={box.w} height={box.h} samples={4} frames={box.on ? Infinity : 0}>
+          <PerspectiveCamera makeDefault manual position={[0, 0, 6.6]} fov={32} aspect={box.w / box.h} />
+          <StudioEnvironment />
+          <ambientLight intensity={0.25} />
+          <directionalLight position={[3, 5, 4]} intensity={1.1} />
+          <directionalLight position={[-4, -2, 3]} intensity={0.4} color="#d9b8ae" />
+          <Tweezers entry={entry} />
+        </RenderTexture>
       </meshBasicMaterial>
     </mesh>
   );

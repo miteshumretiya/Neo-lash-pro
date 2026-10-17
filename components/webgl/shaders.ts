@@ -103,30 +103,33 @@ void main(){
   float aspect=uSize.x/uSize.y;
   vec2 p=(vUv-0.5)*vec2(aspect,1.0);
   vec2 m=(uMouse-0.5)*vec2(aspect,1.0);
-  float t=uTime*0.045+uProgress*0.6;
+  float t=uTime*0.032+uProgress*0.45;
 
   // A slow swirl around the cursor.
   vec2 d=p-m;
-  float pull=exp(-dot(d,d)*5.0)*uHover;
-  float ang=pull*1.1;
+  float pull=exp(-dot(d,d)*3.5)*uHover;
+  float ang=pull*0.8;
   p=m+mat2(cos(ang),-sin(ang),sin(ang),cos(ang))*d;
 
-  // Domain warping: noise feeding noise for flowing satin folds.
-  vec2 q=vec2(fbm(vec3(p*0.9,t)),fbm(vec3(p*0.9+vec2(5.2,1.3),t+3.1)));
-  vec2 r=vec2(fbm(vec3(p*1.2+3.2*q+vec2(1.7,9.2),t*1.3)),fbm(vec3(p*1.2+3.2*q+vec2(8.3,2.8),t*1.1)));
-  float f=fbm(vec3(p*1.05+2.6*r,t*0.7));
+  // Gentle domain warping: large, soft satin folds rather than marbling.
+  vec2 s=p*0.55;
+  vec2 q=vec2(fbm(vec3(s,t)),fbm(vec3(s+vec2(5.2,1.3),t+3.1)));
+  vec2 r=vec2(fbm(vec3(s+1.4*q+vec2(1.7,9.2),t*1.2)),fbm(vec3(s+1.4*q+vec2(8.3,2.8),t*1.1)));
+  float f=fbm(vec3(s+1.1*r,t*0.7));
 
   // Long diagonal ribbons give the fabric its direction.
-  float ribbon=sin((p.x*1.6-p.y*0.9+r.x*2.2+f*1.4)*2.4+t*3.0);
-  float fold=smoothstep(-0.2,1.0,ribbon);
+  float ribbon=sin((p.x*1.1-p.y*0.75+r.x*1.3+f*0.9)*1.6+t*2.2);
+  float fold=smoothstep(-0.3,1.0,ribbon);
 
   vec3 col=uBase;
-  col=mix(col,uSand,smoothstep(-0.45,0.55,f)*0.85);
-  col=mix(col,uSage,smoothstep(0.1,0.95,length(r))*0.75);
-  col=mix(col,uBlush,smoothstep(0.25,0.9,q.y+0.35*f)*0.55);
-  // Satin sheen along the folds, deeper shade in the troughs.
-  col+=pow(fold,7.0)*0.16;
-  col-=(1.0-fold)*0.035;
+  col=mix(col,uSand,smoothstep(-0.5,0.6,f)*0.7);
+  col=mix(col,uSage,smoothstep(0.15,0.95,length(r))*0.42);
+  col=mix(col,uBlush,smoothstep(0.3,0.95,q.y+0.3*f)*0.32);
+  // Satin sheen along the folds, a soft shade in the troughs.
+  col+=pow(fold,6.0)*0.075;
+  col-=(1.0-fold)*0.018;
+  // Quiet vignette for depth inside the frame.
+  col*=mix(0.965,1.0,smoothstep(0.95,0.25,length((vUv-0.5)*vec2(1.0,1.2))));
 
   col=mix(col,uEnd,smoothstep(0.05,0.95,uProgress));
   col+=(hash(vUv*uSize+fract(uTime))-0.5)*(1.6/255.0);

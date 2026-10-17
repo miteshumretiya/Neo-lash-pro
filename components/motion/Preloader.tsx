@@ -72,11 +72,13 @@ export function Preloader() {
       let finished = false;
       const minDuration = 1.9;
       const start = performance.now();
-      const tick = () => {
+      const tick = (_time: number, deltaMs: number) => {
         const elapsed = (performance.now() - start) / 1000;
         const cap = Math.min(1, elapsed / minDuration);
-        progress.value += (Math.min(progress.target, cap) - progress.value) * 0.08;
-        if (Math.min(progress.target, cap) >= 1 && progress.value > 0.995) progress.value = 1;
+        const goal = Math.min(progress.target, cap);
+        // Time-based easing so slow devices don't stretch the intro.
+        progress.value += (goal - progress.value) * (1 - Math.pow(0.006, deltaMs / 1000));
+        if (goal >= 1 && progress.value > 0.985) progress.value = 1;
         const pct = Math.round(progress.value * 100);
         if (counter) counter.textContent = String(pct).padStart(3, "0");
         if (bar) bar.style.transform = `scaleX(${progress.value})`;

@@ -6,6 +6,7 @@ import { useExperience } from "@/lib/store/experience";
 
 type Options = {
   img?: RefObject<HTMLImageElement | null>;
+  /** Corner radius in px; defaults to the element's computed border radius. */
   radius?: number;
   tint?: string;
   initialReveal?: number;
@@ -25,7 +26,7 @@ export function useGlEntry(kind: GlKind, ref: RefObject<HTMLElement | null>, opt
   useLayoutEffect(() => {
     onReady.current = options.onReady;
   });
-  const { img, radius = 0, tint, initialReveal = 0, stateRef } = options;
+  const { img, radius, tint, initialReveal = 0, stateRef } = options;
 
   useEffect(() => {
     const el = ref.current;
@@ -39,7 +40,7 @@ export function useGlEntry(kind: GlKind, ref: RefObject<HTMLElement | null>, opt
       el,
       img: img?.current,
       state: glState,
-      radius,
+      radius: radius ?? (parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0),
       tint,
       onReady: () => onReady.current?.(),
     });

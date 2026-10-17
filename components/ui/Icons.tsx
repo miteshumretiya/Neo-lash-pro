@@ -78,10 +78,19 @@ export const Moon = (p: IconProps) => (
     <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
   </Svg>
 );
+const BAR_HEIGHTS = [5, 10, 7, 4];
+
 export const SoundBars = ({ active, ...p }: IconProps & { active?: boolean }) => (
-  <Svg {...p} className={active ? "sound-on" : undefined}>
+  <Svg {...p} className={active ? "sound-on" : "opacity-60"}>
     {[5, 9.5, 14, 18.5].map((x, i) => (
-      <line key={x} x1={x} x2={x} y1={active ? 6 : 10} y2={active ? 18 : 14} style={{ animationDelay: `${i * 0.12}s` }} />
+      <line
+        key={x}
+        x1={x}
+        x2={x}
+        y1={12 - (active ? 6 : BAR_HEIGHTS[i] / 2)}
+        y2={12 + (active ? 6 : BAR_HEIGHTS[i] / 2)}
+        style={{ animationDelay: `${i * 0.12}s` }}
+      />
     ))}
   </Svg>
 );

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { Product } from "@/data/types";
 
 type Phase = "loading" | "covering" | "revealing" | "idle";
 
@@ -10,7 +11,7 @@ type ExperienceState = {
   /** Increments on every completed client navigation. */
   navigation: number;
   menuOpen: boolean;
-  quickViewSlug: string | null;
+  quickView: Product | null;
   cursorLabel: string | null;
   /** on: full WebGL; lite: no image planes (touch / low power); off: DOM only. */
   webgl: "pending" | "on" | "lite" | "off";
@@ -18,7 +19,7 @@ type ExperienceState = {
   setPhase: (phase: Phase) => void;
   completeNavigation: () => void;
   setMenuOpen: (open: boolean) => void;
-  setQuickView: (slug: string | null) => void;
+  setQuickView: (product: Product | null) => void;
   setCursorLabel: (label: string | null) => void;
   setWebgl: (state: "on" | "lite" | "off") => void;
 };
@@ -28,14 +29,14 @@ export const useExperience = create<ExperienceState>((set) => ({
   phase: "loading",
   navigation: 0,
   menuOpen: false,
-  quickViewSlug: null,
+  quickView: null,
   cursorLabel: null,
   webgl: "pending",
   setLoaded: () => set({ loaded: true, phase: "idle" }),
   setPhase: (phase) => set({ phase }),
   completeNavigation: () => set((s) => ({ navigation: s.navigation + 1 })),
   setMenuOpen: (menuOpen) => set({ menuOpen }),
-  setQuickView: (quickViewSlug) => set({ quickViewSlug }),
+  setQuickView: (quickView) => set({ quickView }),
   setCursorLabel: (cursorLabel) => set({ cursorLabel }),
   setWebgl: (webgl) => set({ webgl }),
 }));

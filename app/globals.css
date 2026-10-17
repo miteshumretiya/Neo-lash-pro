@@ -43,6 +43,9 @@
   --text-micro: 0.6875rem;
   --text-micro--line-height: 1.2;
 
+  --spacing-gutter: var(--gutter);
+  --spacing-section: var(--section);
+
   --radius-frame: clamp(1.25rem, 2vw, 2rem);
   --radius-card: clamp(1rem, 1.4vw, 1.5rem);
 
@@ -158,14 +161,6 @@ html.lenis body {
 }
 
 /* --------------------------------------------------------------- utilities */
-
-@utility px-gutter {
-  padding-inline: var(--gutter);
-}
-
-@utility py-section {
-  padding-block: var(--section);
-}
 
 @utility grid-12 {
   display: grid;
@@ -601,5 +596,19 @@ html[data-intro="skip"] [data-preloader] {
   }
   to {
     transform: scaleY(1);
+  }
+}
+
+/* Product morph: show the DOM image so the View Transition snapshot isn't empty. */
+[data-force-dom="true"] img {
+  opacity: 1 !important;
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-110%);
+  }
+  100% {
+    transform: translateY(220%);
   }
 }

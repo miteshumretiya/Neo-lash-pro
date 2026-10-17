@@ -108,6 +108,7 @@ export const catalog: Product[] = [
     ],
     options: [{ name: "Curl", values: ["D"] }],
     images: lashTrayImages("Black Diamond Line 0.08 Mix"),
+    bestseller: true,
   },
   {
     slug: "black-diamond-line-0-10-mix-trays-i-7-13mm-i",
