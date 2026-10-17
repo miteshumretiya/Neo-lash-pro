@@ -2,9 +2,11 @@
 // curated Unsplash picks, optimises it with sharp and writes it to /public/media.
 // Runs in CI (.github/workflows/media.yml) so the site never hotlinks images.
 //
-//   node scripts/media/sync.mjs review   -> site photos + Unsplash contact sheets
+//   node scripts/media/sync.mjs site     -> photos from the original site
+//   node scripts/media/sync.mjs stock    -> Unsplash contact sheets for review
 //   node scripts/media/sync.mjs content  -> original copy (products, pages, posts)
 //   node scripts/media/sync.mjs final    -> download picks from picks.json
+// Steps can be combined: "stock,content".
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
@@ -150,54 +152,68 @@ async function crawlSite() {
 }
 
 // ------------------------------------------------------------ Unsplash review
-const QUERIES = [
-  "eyelash extensions",
-  "eyelashes close up",
-  "woman eye macro",
+// The JSON API needs a key, so candidates come from public search pages and the
+// /download redirect, which only resolves for free (non Unsplash+) photos.
+const SEARCHES = [
+  "lash-extensions",
+  "eyelash-extensions",
+  "lashes",
+  "eye-close-up",
   "eyebrows",
-  "beauty salon interior",
-  "beauty portrait natural light",
-  "skincare editorial",
-  "cosmetic products minimal",
-  "tweezers",
+  "lash-artist",
+  "beauty-portrait",
+  "natural-beauty-woman",
+  "beauty-editorial",
+  "skincare-aesthetic",
   "malta",
-  "conference audience",
-  "beauty workshop",
+  "conference-audience",
+];
+const EXTRA_IDS = [
+  "GEct9d7zgos", "Ky4XkgxoUbo", "I9qWzMTuL5k", "ugqI4poLV-g", "xFvGVDp3cYE",
+  "uIJtDZIbSwI", "nKyxhvjFzdk", "fvInY-Gh7sc", "De36tNJI-mU", "e9IB1BpfQRI",
+  "DnXT8yM_63I", "fDpqQQqmQ20",
 ];
 
+async function freeImageUrl(id) {
+  try {
+    const res = await fetch(`https://unsplash.com/photos/${id}/download?force=true`, {
+      headers: UA,
+      redirect: "manual",
+    });
+    const location = res.headers.get("location");
+    return location?.startsWith("https://images.unsplash.com") ? location : null;
+  } catch {
+    return null;
+  }
+}
+
 async function unsplashReview() {
-  for (const query of QUERIES) {
-    const results = [];
-    for (const page of [1, 2]) {
-      const data = await get(
-        `https://unsplash.com/napi/search/photos?query=${encodeURIComponent(query)}&per_page=30&page=${page}`,
-        "json",
-      );
-      for (const r of data?.results ?? []) {
-        const free = !r.premium && !r.plus && r.urls?.raw?.startsWith("https://images.unsplash.com");
-        if (free) results.push(r);
-      }
-    }
-    const picked = results.slice(0, 30);
-    const slug = query.replace(/[^a-z0-9]+/g, "-");
+  const groups = [];
+  for (const term of SEARCHES) {
+    const html = (await get(`https://unsplash.com/s/photos/${term}?license=free`)) ?? "";
+    const ids = [
+      ...new Set([...html.matchAll(/href="\/photos\/(?:[a-z0-9-]+-)?([A-Za-z0-9_-]{11})"/g)].map((m) => m[1])),
+    ];
+    console.log(`search ${term}: ${ids.length} ids`);
+    groups.push({ name: term, ids: ids.slice(0, 18) });
+  }
+  groups.push({ name: "extra", ids: EXTRA_IDS });
+
+  for (const group of groups) {
     const tiles = [];
     const info = [];
-    for (const [i, r] of picked.entries()) {
-      const buffer = await get(`${r.urls.raw}&w=420&q=60&fm=jpg&fit=max`, "buffer");
-      tiles.push({ buffer, label: i });
-      info.push({
-        i,
-        id: r.id,
-        w: r.width,
-        h: r.height,
-        alt: r.alt_description ?? r.description ?? "",
-        by: r.user?.name ?? "",
-      });
+    for (const id of group.ids) {
+      const url = await freeImageUrl(id);
+      if (!url) continue;
+      const buffer = await get(`${url}&w=420&q=60`, "buffer");
+      if (!buffer) continue;
+      tiles.push({ buffer, label: tiles.length });
+      info.push({ i: info.length, id });
     }
-    console.log(`unsplash "${query}": ${picked.length}`);
+    console.log(`unsplash ${group.name}: ${tiles.length} free`);
     if (!tiles.length) continue;
-    await contactSheet(tiles, path.join(REVIEW, `u-${slug}.jpg`), `unsplash: ${query}`);
-    await fs.writeFile(path.join(REVIEW, `u-${slug}.json`), JSON.stringify(info, null, 1));
+    await contactSheet(tiles, path.join(REVIEW, `u-${group.name}.jpg`), `unsplash: ${group.name}`);
+    await fs.writeFile(path.join(REVIEW, `u-${group.name}.json`), JSON.stringify(info));
   }
 }
 
@@ -206,22 +222,16 @@ async function unsplashFinal() {
   const picks = JSON.parse(await fs.readFile(path.join(ROOT, "scripts/media/picks.json"), "utf8"));
   const credits = [];
   for (const [key, id] of Object.entries(picks)) {
-    const photo = await get(`https://unsplash.com/napi/photos/${id}`, "json");
-    if (!photo?.urls?.raw) continue;
-    const buffer = await get(`${photo.urls.raw}&w=2400&q=85&fm=jpg&fit=max`, "buffer");
+    const url = await freeImageUrl(id);
+    if (!url) {
+      console.warn("  ! not free or missing", id);
+      continue;
+    }
+    const buffer = await get(`${url}&w=2400&q=85`, "buffer");
     if (!buffer) continue;
     const file = `stock/${key}.jpg`;
     const dims = await saveJpeg(buffer, path.join(MEDIA, file), 2400);
-    credits.push({
-      key,
-      file,
-      id,
-      ...dims,
-      alt: photo.alt_description ?? photo.description ?? "",
-      photographer: photo.user?.name ?? "",
-      profile: photo.user?.links?.html ?? "",
-      link: photo.links?.html ?? "",
-    });
+    credits.push({ key, file, id, ...dims, link: `https://unsplash.com/photos/${id}` });
     console.log("saved", file);
   }
   await fs.writeFile(path.join(MEDIA, "stock/credits.json"), JSON.stringify(credits, null, 2));
@@ -285,13 +295,9 @@ async function siteContent() {
   }
 }
 
-if (mode === "review") {
-  await crawlSite();
-  await unsplashReview();
-} else if (mode === "content") {
-  await siteContent();
-} else if (mode === "final") {
-  await unsplashFinal();
-} else {
-  throw new Error(`Unknown mode ${mode}`);
+const steps = { site: crawlSite, stock: unsplashReview, content: siteContent, final: unsplashFinal };
+const requested = mode === "review" ? ["site", "stock"] : mode.split(",");
+for (const step of requested) {
+  if (!steps[step]) throw new Error(`Unknown mode ${step}`);
+  await steps[step]();
 }
