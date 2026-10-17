@@ -21,7 +21,7 @@ export function CertificationPath({ eyebrow = "Your path" }: { eyebrow?: string 
         );
         gsap.utils.toArray<HTMLElement>("[data-step]").forEach((step) => {
           gsap.from(step, {
-            autoAlpha: 0.15,
+            autoAlpha: 0,
             x: 24,
             duration: 1,
             ease: "luxe",

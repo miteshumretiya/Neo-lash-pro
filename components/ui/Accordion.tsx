@@ -17,6 +17,8 @@ type AccordionProps = {
   /** Index open on first render (-1 for none). */
   defaultOpen?: number;
   numbered?: boolean;
+  /** Heading level for the item titles, to keep the page outline in order. */
+  headingLevel?: 2 | 3;
   className?: string;
 };
 
@@ -24,9 +26,10 @@ type AccordionProps = {
  * Disclosure list. Panels animate with a grid-rows transition, closed panels
  * are inert, and ScrollTrigger re-measures once the height has settled.
  */
-export function Accordion({ items, defaultOpen = -1, numbered = false, className }: AccordionProps) {
+export function Accordion({ items, defaultOpen = -1, numbered = false, headingLevel = 3, className }: AccordionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
+  const Heading = headingLevel === 2 ? "h2" : "h3";
 
   return (
     <ul className={cn("border-t border-line", className)}>
@@ -34,7 +37,7 @@ export function Accordion({ items, defaultOpen = -1, numbered = false, className
         const isOpen = open === i;
         return (
           <li key={i} className="border-b border-line">
-            <h3>
+            <Heading>
               <button
                 type="button"
                 id={`${id}-h${i}`}
@@ -49,14 +52,14 @@ export function Accordion({ items, defaultOpen = -1, numbered = false, className
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "grid size-9 shrink-0 place-items-center rounded-full border border-line transition-[transform,background-color,color,border-color] duration-500 ease-luxe group-hover:border-ink",
-                    isOpen && "rotate-45 border-ink bg-ink text-canvas",
+                    "grid size-9 shrink-0 place-items-center rounded-full border transition-[transform,background-color,color,border-color] duration-500 ease-luxe group-hover:border-ink",
+                    isOpen ? "rotate-45 border-ink bg-ink text-canvas" : "border-line",
                   )}
                 >
                   <Plus size={15} />
                 </span>
               </button>
-            </h3>
+            </Heading>
             <div
               id={`${id}-p${i}`}
               role="region"

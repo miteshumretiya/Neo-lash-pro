@@ -152,7 +152,7 @@ export function Bestsellers({ products, spotlight }: Props) {
               onClick={() => choose(c.id)}
               className={cn(
                 "text-[clamp(1.5rem,2.6vw,2.4rem)] font-light tracking-[-0.03em] transition-colors duration-500",
-                filter === c.id ? "text-ink" : "text-ink/30 hover:text-ink/60",
+                filter === c.id ? "text-ink" : "text-ink/50 hover:text-ink/75",
               )}
             >
               {c.label}

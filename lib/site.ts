@@ -1,11 +1,11 @@
 import { photos } from "@/data/media";
 import type { ImageRef } from "@/data/types";
 
-export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:3000");
+// Client code only sees NEXT_PUBLIC_* variables; Vercel exposes the production
+// domain to the browser as NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL.
+const vercelDomain = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
+export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (vercelDomain ? `https://${vercelDomain}` : "http://localhost:3000");
 
 export const site = {
   name: "Neo Lash®",

@@ -21,7 +21,7 @@ export function WhatsAppBuy({ lines, label = "Buy on WhatsApp", className, size 
       className={cn(
         "btn roll-host",
         size === "sm" && "btn-sm",
-        variant === "solid" ? "bg-whatsapp text-white hover:bg-[#17703c]" : "btn-ghost",
+        variant === "solid" ? "bg-whatsapp text-white hover:bg-[#13612f]" : "btn-ghost",
         className,
       )}
     >

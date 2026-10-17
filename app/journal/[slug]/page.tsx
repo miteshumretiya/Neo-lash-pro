@@ -70,7 +70,7 @@ export default async function ArticlePage({ params }: PageProps<"/journal/[slug]
                   href={whatsappUrl(`Hi Neo Lash! I just read "${post.title}" and have a question.`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn-sm bg-whatsapp text-white hover:bg-[#17703c]"
+                  className="btn btn-sm bg-whatsapp text-white hover:bg-[#13612f]"
                 >
                   <span className="inline-flex items-center gap-2">
                     <WhatsApp size={15} /> Ask a question

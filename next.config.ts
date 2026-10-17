@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
+// Product photos come from the WooCommerce host when the live catalogue is enabled.
+const storeHost = process.env.WOOCOMMERCE_STORE_URL ? new URL(process.env.WOOCOMMERCE_STORE_URL).hostname : null;
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // Auto-memoises components so one-off client updates (mounted flags,
+  // WebGL tier, reveal readiness) don't re-render whole product grids.
+  reactCompiler: true,
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
@@ -10,6 +16,7 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 828, 1080, 1280, 1600, 1920, 2560],
     imageSizes: [96, 128, 256, 384, 512],
     minimumCacheTTL: 60 * 60 * 24 * 30,
+    remotePatterns: storeHost ? [{ protocol: "https", hostname: storeHost }] : [],
   },
   async headers() {
     return [

@@ -39,7 +39,7 @@ export default function CoursesPage() {
         }
         intro="Certified eyelash extension courses in St. Julian's, Malta — from your very first classic set to masterclass, taught by Daniela and the Neo Lash® educators."
       >
-        <a href={enquire} target="_blank" rel="noopener noreferrer" className="btn bg-whatsapp text-white hover:bg-[#17703c]" data-cursor="Enquire">
+        <a href={enquire} target="_blank" rel="noopener noreferrer" className="btn bg-whatsapp text-white hover:bg-[#13612f]" data-cursor="Enquire">
           <span className="inline-flex items-center gap-2">
             <WhatsApp size={17} /> Ask about dates
           </span>

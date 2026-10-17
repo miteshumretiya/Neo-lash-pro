@@ -97,6 +97,7 @@ export default async function ProductPage({ params }: PageProps<"/shop/[slug]">)
 
               <Accordion
                 className="mt-12"
+                headingLevel={2}
                 defaultOpen={0}
                 items={[
                   {

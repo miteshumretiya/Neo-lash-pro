@@ -108,7 +108,7 @@ export function Courses() {
                       href={whatsappUrl(enquiryMessage(`the ${course.name} (next dates and price)`))}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-sm flex-1 bg-whatsapp text-white hover:bg-[#17703c]"
+                      className="btn btn-sm flex-1 bg-whatsapp text-white hover:bg-[#13612f]"
                       data-cursor="Enrol"
                     >
                       <span className="inline-flex items-center gap-2">

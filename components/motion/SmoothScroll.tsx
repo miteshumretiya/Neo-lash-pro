@@ -35,10 +35,20 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     document.fonts?.ready.then(refresh);
     window.addEventListener("load", refresh);
 
+    // Lenis only makes programmatic scrolls instant under reduced motion;
+    // turn wheel smoothing off as well so scrolling feels fully native.
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const applyMotion = () => {
+      lenis.options.smoothWheel = !motion.matches;
+    };
+    applyMotion();
+    motion.addEventListener("change", applyMotion);
+
     return () => {
       lenis.off("scroll", onScroll);
       gsap.ticker.remove(tick);
       window.removeEventListener("load", refresh);
+      motion.removeEventListener("change", applyMotion);
       scroll.set(null);
     };
   }, []);

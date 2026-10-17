@@ -112,7 +112,7 @@ export function Header() {
               )}
               aria-hidden="true"
             >
-              {wishlistCount}
+              {wishlistCount > 0 && wishlistCount}
             </span>
           </TransitionLink>
           <Magnetic className="hidden sm:inline-flex">

@@ -103,7 +103,7 @@ export const courses: Course[] = [
     ],
     included: certification,
     image: photos.applicationClose,
-    gallery: [photos.workDense, photos.tweezersHand, photos.workVolume],
+    gallery: [photos.workDense, photos.applicationVolume, photos.workVolume],
   },
   {
     slug: "combo-course",

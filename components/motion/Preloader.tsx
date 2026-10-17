@@ -61,8 +61,8 @@ export function Preloader() {
           progress.target = done / loaders.length;
         }),
       );
-      // Never wait longer than 4.5s for slow assets.
-      const timeout = gsap.delayedCall(4.5, () => (progress.target = 1));
+      // Never wait longer than 3.5s for slow assets.
+      const timeout = gsap.delayedCall(3.5, () => (progress.target = 1));
 
       gsap.set(frames, { clipPath: "inset(100% 0% 0% 0%)" });
       if (split) gsap.set(split.chars, { yPercent: 110 });

@@ -104,7 +104,10 @@ export function ShopCatalog({ products }: { products: Product[] }) {
     });
 
   return (
-    <section aria-label="Products" className="px-gutter pb-section">
+    <section aria-labelledby="catalog-title" className="px-gutter pb-section">
+      <h2 id="catalog-title" className="sr-only">
+        Products
+      </h2>
       <div className="mb-10 flex flex-col gap-8 border-t border-line pt-8">
         <div role="group" aria-label="Category" className="flex flex-wrap gap-x-7 gap-y-3">
           {categories.map((c) => (
@@ -115,7 +118,7 @@ export function ShopCatalog({ products }: { products: Product[] }) {
               onClick={() => update(() => setCategory(c.id))}
               className={cn(
                 "text-[clamp(1.6rem,3vw,2.8rem)] font-light tracking-[-0.03em] transition-colors duration-500",
-                category === c.id ? "text-ink" : "text-ink/30 hover:text-ink/60",
+                category === c.id ? "text-ink" : "text-ink/50 hover:text-ink/75",
               )}
             >
               {c.label}

@@ -26,6 +26,8 @@ export function ScrubWords({ as: Tag = "p", children, className, start = "top 82
       const split = SplitText.create(el, {
         type: "words",
         wordsClass: "scrub-word",
+        // Words read fine on their own; an aria-label isn't allowed on <p>.
+        aria: "none",
         autoSplit: true,
         onSplit(self) {
           return gsap.fromTo(

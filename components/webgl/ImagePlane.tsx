@@ -60,14 +60,33 @@ export function ImagePlane({ entry }: { entry: GlEntry }) {
     const img = entry.img;
     if (!img) return;
     let cancelled = false;
+    let uploaded = "";
     const upload = () => {
-      if (cancelled || !img.naturalWidth) return;
-      texture.image = img;
-      texture.needsUpdate = true;
-      material.uniforms.uImage.value = [img.naturalWidth, img.naturalHeight];
-      // Upload now so the swap from the DOM image never flashes.
-      gl.initTexture(texture);
-      entry.onReady?.();
+      const url = img.currentSrc || img.src;
+      if (cancelled || !img.naturalWidth || !url) return;
+      // A srcset image reports a density-corrected naturalWidth, but WebGL
+      // uploads the full bitmap — so three.js would size the GPU storage too
+      // small and the upload fails (black tile). A plain Image of the chosen
+      // file reports its real pixel size; it comes straight from the cache.
+      const source = new Image();
+      source.decoding = "async";
+      source.src = url;
+      source
+        .decode()
+        .then(() => {
+          if (cancelled) return;
+          // A larger srcset candidate can load later: reallocate at the new size.
+          const size = `${source.naturalWidth}x${source.naturalHeight}`;
+          if (uploaded && uploaded !== size) texture.dispose();
+          uploaded = size;
+          texture.image = source;
+          texture.needsUpdate = true;
+          material.uniforms.uImage.value = [source.naturalWidth, source.naturalHeight];
+          // Upload now so the swap from the DOM image never flashes.
+          gl.initTexture(texture);
+          entry.onReady?.();
+        })
+        .catch(() => {});
     };
     if (img.complete) upload();
     img.addEventListener("load", upload);

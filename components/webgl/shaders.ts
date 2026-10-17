@@ -183,6 +183,8 @@ void main(){
   float revealMask=smoothstep(edge-0.06,edge,1.0-vUv.y);
   float alpha=roundedAlpha(vUv,uSize,uRadius)*(1.0-revealMask);
   gl_FragColor=vec4(col,alpha);
+  // The sRGB texture is sampled as linear; convert back so photos match the DOM.
+  #include <colorspace_fragment>
 }
 `;
 

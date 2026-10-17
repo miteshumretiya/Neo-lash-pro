@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { scroll } from "@/lib/motion/scroll";
 import { useWishlist } from "@/lib/store/wishlist";
 import { useExperience } from "@/lib/store/experience";
+import { glRegistry } from "@/lib/gl/registry";
+import { detectGlMode } from "@/lib/gl/capability";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { TransitionProvider } from "@/components/motion/Transition";
 import { Cursor } from "@/components/motion/Cursor";
@@ -18,12 +20,24 @@ import { BookPill, ScrollProgress } from "@/components/layout/FloatingUi";
 const WebGLRoot = dynamic(() => import("@/components/webgl/WebGLRoot"), { ssr: false });
 const QuickView = dynamic(() => import("@/components/shop/QuickView"), { ssr: false });
 
+// Latches true once any page has registered a WebGL element.
+let glWanted = false;
+const glNeeded = () => (glWanted ||= glRegistry.snapshot().length > 0);
+
 function useGlobalEffects() {
   const navigation = useExperience((s) => s.navigation);
+  const setWebgl = useExperience((s) => s.setWebgl);
 
   useEffect(() => {
     void useWishlist.persist.rehydrate();
   }, []);
+
+  // Decide the WebGL tier up front; three.js itself loads only when needed.
+  useEffect(() => {
+    const mode = detectGlMode();
+    setWebgl(mode);
+    document.documentElement.dataset.webgl = mode;
+  }, [setWebgl]);
 
   // Late-loading images change layout: re-measure ScrollTriggers (debounced).
   useEffect(() => {
@@ -74,11 +88,13 @@ function useGlobalEffects() {
  */
 export function Experience({ children }: { children: ReactNode }) {
   useGlobalEffects();
+  const webgl = useExperience((s) => s.webgl);
+  const hasGl = useSyncExternalStore(glRegistry.subscribe, glNeeded, () => false);
 
   return (
     <SmoothScroll>
       <TransitionProvider>
-        <WebGLRoot />
+        {hasGl && (webgl === "on" || webgl === "lite") && <WebGLRoot />}
         <Header />
         <MenuOverlay />
         <main id="main" className="relative z-[1]">

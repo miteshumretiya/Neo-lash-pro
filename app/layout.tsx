@@ -48,8 +48,9 @@ export const viewport: Viewport = {
   colorScheme: "light dark",
 };
 
-// Runs before first paint: theme, intro-skip and reduced-motion flags.
-const boot = `(function(){var d=document.documentElement;d.classList.remove("no-js");try{var t=localStorage.getItem("neolash:theme");if(t==="dark"||t==="light")d.dataset.theme=t}catch(e){}try{if(sessionStorage.getItem("neolash:intro"))d.dataset.intro="skip"}catch(e){}if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("reduced-motion")})();`;
+// Runs before first paint: theme, intro-skip (the intro only plays when a visit
+// starts on the home page) and reduced-motion flags.
+const boot = `(function(){var d=document.documentElement;d.classList.remove("no-js");try{var t=localStorage.getItem("neolash:theme");if(t==="dark"||t==="light")d.dataset.theme=t}catch(e){}var s=location.pathname!=="/";try{s=s||!!sessionStorage.getItem("neolash:intro")}catch(e){}if(s)d.dataset.intro="skip";if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("reduced-motion")})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

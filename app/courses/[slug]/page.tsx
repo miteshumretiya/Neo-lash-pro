@@ -56,7 +56,7 @@ export default async function CoursePage({ params }: PageProps<"/courses/[slug]"
         title={course.name}
         intro={course.summary}
       >
-        <a href={enrol} target="_blank" rel="noopener noreferrer" className="btn bg-whatsapp text-white hover:bg-[#17703c]" data-cursor="Enrol">
+        <a href={enrol} target="_blank" rel="noopener noreferrer" className="btn bg-whatsapp text-white hover:bg-[#13612f]" data-cursor="Enrol">
           <span className="inline-flex items-center gap-2">
             <WhatsApp size={17} /> Enrol on WhatsApp
           </span>

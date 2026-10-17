@@ -110,6 +110,7 @@ function PillarCard({ pillar }: { pillar: Pillar }) {
           </div>
           <span className="grid size-12 shrink-0 place-items-center rounded-full bg-cream text-night transition-transform duration-700 ease-luxe group-hover:rotate-45">
             <ArrowUpRight size={18} />
+            <span className="sr-only">{pillar.cta}</span>
           </span>
         </div>
       </div>
@@ -120,11 +121,11 @@ function PillarCard({ pillar }: { pillar: Pillar }) {
     <Tilt className={cn("[transform-style:preserve-3d]", pillar.className)} max={4}>
       <div ref={ref} className="group relative h-full w-full overflow-hidden rounded-frame" data-cursor={pillar.cta.split(" ")[0]}>
         {pillar.external ? (
-          <a href={pillar.href} target="_blank" rel="noopener noreferrer" aria-label={`${pillar.title} — ${pillar.cta}`} className="absolute inset-0">
+          <a href={pillar.href} target="_blank" rel="noopener noreferrer" className="absolute inset-0">
             {content}
           </a>
         ) : (
-          <TransitionLink href={pillar.href} aria-label={`${pillar.title} — ${pillar.cta}`} className="absolute inset-0">
+          <TransitionLink href={pillar.href} className="absolute inset-0">
             {content}
           </TransitionLink>
         )}

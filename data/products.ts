@@ -49,6 +49,8 @@ export const catalog: Product[] = [
       img("site/202212-prodotti-website-3", "Neo Lash tweezer profiles labelled by name"),
       img("site/202212-12-1", "Neo Lash Russian volume tweezer"),
       img("site/202212-14", "Neo Lash L-shaped tweezer"),
+      img("site/202212-13-1", "Neo Lash curved tweezer with a textured grip"),
+      img("site/202212-15", "Neo Lash tweezer with a fine angled tip"),
     ],
     bestseller: true,
   },

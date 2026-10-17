@@ -43,7 +43,10 @@ export function WishlistView({ products }: { products: Product[] }) {
   }
 
   return (
-    <section aria-label="Saved products" className="px-gutter pb-section">
+    <section aria-labelledby="saved-title" className="px-gutter pb-section">
+      <h2 id="saved-title" className="sr-only">
+        Saved products
+      </h2>
       <div className="mb-12 flex flex-col gap-6 border-y border-line py-6 md:flex-row md:items-center md:justify-between">
         <p className="text-muted">
           <span className="text-ink">{saved.length}</span> saved {saved.length === 1 ? "product" : "products"} — order them together in one
