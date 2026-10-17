@@ -41,7 +41,7 @@ const pillars: Pillar[] = [
   {
     index: "02",
     title: "Pro Products",
-    text: "Tweezers, lashes and aftercare used by artists — ordered on WhatsApp, delivered worldwide.",
+    text: "Tweezers, lashes and aftercare used by artists — ordered in a tap on WhatsApp.",
     href: "/shop",
     cta: "Shop the range",
     image: photos.toolsGlove,

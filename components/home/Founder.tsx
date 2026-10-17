@@ -9,12 +9,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { TransitionLink } from "@/components/motion/Transition";
 import { ArrowRight } from "@/components/ui/Icons";
 import { photos } from "@/data/media";
-
-const story = [
-  "Daniela is the founder and CEO of Neo Lash®. She began her journey in the lash and brow industry in 2015 and today runs her own studio in St. Julian's, Malta.",
-  "An international lash championship judge, speaker and trainer, she shares her technique with students from Malta and abroad through the Neo Lash® Academy.",
-  "She also founded the Lash & Brow Summit — the international event that brings the industry together in Malta.",
-];
+import { founderStory } from "@/data/studio";
 
 /** Pinned founder story: portrait parallax on one side, story brightening on the other. */
 export function Founder() {
@@ -68,7 +63,7 @@ export function Founder() {
           </SplitReveal>
 
           <div data-story-list className="mt-10 space-y-6 text-[clamp(1.1rem,1.5vw,1.4rem)] leading-[1.45] tracking-[-0.01em]">
-            {story.map((paragraph) => (
+            {founderStory.map((paragraph) => (
               <p key={paragraph.slice(0, 20)} data-story>
                 {paragraph}
               </p>
@@ -77,10 +72,10 @@ export function Founder() {
 
           <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-line pt-8 sm:grid-cols-4">
             {[
-              { label: "In the industry since", value: <Counter value={2015} duration={2.6} /> },
+              { label: "In the industry since", value: <Counter value={2015} from={1990} duration={2.6} /> },
               { label: "Years of experience", value: <Counter value={10} suffix="+" /> },
-              { label: "Students trained", value: <Counter value={100} suffix="+" /> },
               { label: "International lash championships", value: <span className="italic">Judge</span> },
+              { label: "Lash & Brow Summit", value: <span className="italic">Founder</span> },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col-reverse gap-2">
                 <dt className="text-sm leading-snug text-muted">{stat.label}</dt>

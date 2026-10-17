@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/motion/gsap";
 import { site } from "@/lib/site";
 import { ArrowUpRight } from "@/components/ui/Icons";
+import { cn } from "@/lib/cn";
 
 /** Thin sage line tracking page progress. */
 export function ScrollProgress() {
@@ -62,7 +63,11 @@ export function BookPill() {
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="Book"
-      className="invisible fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] right-1/2 z-[45] flex translate-x-1/2 items-center gap-2.5 rounded-full bg-ink py-1.5 pl-1.5 pr-4 text-sm font-medium text-canvas shadow-[0_18px_50px_-20px_rgb(0_0_0/0.45)] sm:right-[var(--gutter)] sm:translate-x-0 sm:gap-3 sm:py-2 sm:pl-2 sm:pr-5"
+      className={cn(
+        "invisible fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] right-1/2 z-[45] flex translate-x-1/2 items-center gap-2.5 rounded-full bg-ink py-1.5 pl-1.5 pr-4 text-sm font-medium text-canvas shadow-[0_18px_50px_-20px_rgb(0_0_0/0.45)] sm:right-[var(--gutter)] sm:translate-x-0 sm:gap-3 sm:py-2 sm:pl-2 sm:pr-5",
+        // Product pages have their own buy bar on phones.
+        pathname.startsWith("/shop/") && "max-md:hidden",
+      )}
     >
       <span className="grid size-8 place-items-center rounded-full bg-sage text-night sm:size-9">
         <span className="size-2 animate-pulse-dot rounded-full bg-night" aria-hidden="true" />

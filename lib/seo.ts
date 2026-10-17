@@ -92,8 +92,8 @@ export function articleJsonLd(post: Post) {
     description: post.excerpt,
     image: abs(post.cover.src),
     ...(post.date ? { datePublished: post.date } : {}),
-    author: { "@type": "Person", name: site.founder },
-    publisher: { "@type": "Organization", name: site.fullName },
+    author: { "@type": "Organization", name: site.fullName, url: siteUrl },
+    publisher: { "@type": "Organization", name: site.fullName, logo: { "@type": "ImageObject", url: abs("/icon.svg") } },
     mainEntityOfPage: abs(`/journal/${post.slug}`),
   };
 }

@@ -92,7 +92,7 @@ export function Bestsellers({ products, spotlight }: Props) {
         <Reveal className="md:col-span-4 md:col-start-9">
           <p className="text-muted">
             The tweezers, lashes and aftercare we trust in our own studio. Choose your products and order them directly on WhatsApp —
-            we ship worldwide.
+            we&apos;ll confirm delivery with you.
           </p>
         </Reveal>
       </div>

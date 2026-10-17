@@ -12,7 +12,7 @@ import { ArrowUpRight } from "@/components/ui/Icons";
 import { photos } from "@/data/media";
 import { site } from "@/lib/site";
 
-const words = ["International speakers", "Masterclasses", "Lash & Brow Championship", "Networking", "Malta"];
+const words = ["International event", "Artists", "Educators", "Brands", "Every year in Malta"];
 
 /**
  * Cinematic full-bleed block: the frame expands from a rounded card to the
@@ -69,8 +69,8 @@ export function Summit() {
             </SplitReveal>
             <Reveal delay={0.2} className="mx-auto mt-8 max-w-xl text-[1.05rem] leading-relaxed text-cream/75">
               <p>
-                Founded by Daniela in 2022 as Malta&apos;s first summit dedicated entirely to the lash and brow industry — bringing
-                artists, educators and brands together every year, with a championship since 2024.
+                Founded by Daniela, the Lash &amp; Brow Summit is the international event that brings lash and brow artists,
+                educators and brands together in Malta every year.
               </p>
             </Reveal>
             <Reveal delay={0.35} className="mt-10 flex justify-center">

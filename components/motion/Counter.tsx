@@ -6,6 +6,8 @@ import { useRevealReady } from "@/lib/motion/useRevealReady";
 
 type CounterProps = {
   value: number;
+  /** Starting number, e.g. a year a little before `value`. */
+  from?: number;
   prefix?: string;
   suffix?: string;
   duration?: number;
@@ -14,7 +16,7 @@ type CounterProps = {
 };
 
 /** Counts up from zero when it scrolls into view. */
-export function Counter({ value, prefix = "", suffix = "", duration = 2.2, className, pad = 0 }: CounterProps) {
+export function Counter({ value, from = 0, prefix = "", suffix = "", duration = 2.2, className, pad = 0 }: CounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const ready = useRevealReady();
   const format = (n: number) => `${prefix}${String(Math.round(n)).padStart(pad, "0")}${suffix}`;
@@ -23,8 +25,8 @@ export function Counter({ value, prefix = "", suffix = "", duration = 2.2, class
     () => {
       const el = ref.current;
       if (!el || !ready) return;
-      const state = { n: 0 };
-      el.textContent = format(0);
+      const state = { n: from };
+      el.textContent = format(from);
       gsap.to(state, {
         n: value,
         duration,
@@ -35,7 +37,7 @@ export function Counter({ value, prefix = "", suffix = "", duration = 2.2, class
         scrollTrigger: { trigger: el, start: "top 90%", once: true },
       });
     },
-    { dependencies: [ready, value], scope: ref, revertOnUpdate: true },
+    { dependencies: [ready, value, from], scope: ref, revertOnUpdate: true },
   );
 
   return (

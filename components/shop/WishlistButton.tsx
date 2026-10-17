@@ -49,8 +49,8 @@ export function WishlistButton({ slug, name, className }: { slug: string; name: 
       aria-pressed={active}
       aria-label={active ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
       className={cn(
-        "grid size-10 place-items-center rounded-full bg-surface/85 text-ink backdrop-blur transition-colors duration-500 hover:bg-surface",
-        active && "text-[#b45d4c]",
+        "grid size-10 place-items-center rounded-full bg-surface/85 backdrop-blur transition-colors duration-500 hover:bg-surface",
+        active ? "text-[#b45d4c]" : "text-ink",
         className,
       )}
     >

@@ -40,6 +40,11 @@ export type CategoryInfo = {
   count: number;
 };
 
+export type CourseModule = {
+  title: string;
+  topics: string[];
+};
+
 export type Course = {
   slug: string;
   name: string;
@@ -50,7 +55,8 @@ export type Course = {
   summary: string;
   intro: string[];
   audience: string;
-  curriculum: string[];
+  /** Course topics grouped into modules. */
+  curriculum: CourseModule[];
   included: string[];
   image: ImageRef;
   gallery: ImageRef[];

@@ -12,7 +12,7 @@ export const site = {
   fullName: "Neo Lash® Pro",
   tagline: "Give your eyes the look they deserve.",
   description:
-    "Lash & brow experts in St. Julian's, Malta. Signature lash and brow treatments, professional lash products shipped worldwide and certified eyelash extension courses by Daniela.",
+    "Lash & brow experts in St. Julian's, Malta. Signature lash and brow treatments, professional lash products and certified eyelash extension courses by Daniela.",
   founder: "Daniela Ionel",
   booking:
     "https://www.fresha.com/book-now/neo-lash-lash-brow-experts-a9dnhipn/all-offer?share=true&pId=2583497",
