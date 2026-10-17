@@ -3,6 +3,7 @@
 // Runs in CI (.github/workflows/media.yml) so the site never hotlinks images.
 //
 //   node scripts/media/sync.mjs review   -> site photos + Unsplash contact sheets
+//   node scripts/media/sync.mjs content  -> original copy (products, pages, posts)
 //   node scripts/media/sync.mjs final    -> download picks from picks.json
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -226,9 +227,69 @@ async function unsplashFinal() {
   await fs.writeFile(path.join(MEDIA, "stock/credits.json"), JSON.stringify(credits, null, 2));
 }
 
+// ------------------------------------------------------- original site copy
+const htmlToText = (html = "") =>
+  html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<img[^>]*?src="([^"]+)"[^>]*>/gi, (_, src) => ` [img ${path.basename(src)}] `)
+    .replace(/<(h[1-6])[^>]*>/gi, "\n## ")
+    .replace(/<\/(p|li|div|h[1-6]|tr)>|<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#8211;|&ndash;/g, "-")
+    .replace(/&#8217;|&#8216;/g, "'")
+    .replace(/&#8220;|&#8221;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&euro;|&#8364;/g, "€")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
+
+async function siteContent() {
+  const out = path.join(REVIEW, "content");
+  await fs.mkdir(out, { recursive: true });
+
+  const products = (await get("https://neolashpro.com/wp-json/wc/store/v1/products?per_page=100", "json")) ?? [];
+  const slim = products.map((p) => ({
+    name: p.name,
+    slug: p.slug,
+    permalink: p.permalink,
+    prices: p.prices,
+    on_sale: p.on_sale,
+    categories: p.categories?.map((c) => c.name),
+    attributes: p.attributes?.map((a) => ({ name: a.name, terms: a.terms?.map((t) => t.name) })),
+    variations: p.variations,
+    short: htmlToText(p.short_description),
+    description: htmlToText(p.description),
+    images: p.images?.map((i) => i.src),
+  }));
+  await fs.writeFile(path.join(out, "products.json"), JSON.stringify(slim, null, 1));
+  console.log(`products: ${slim.length}`);
+
+  for (const type of ["pages", "posts"]) {
+    const items = (await get(`https://neolashpro.com/wp-json/wp/v2/${type}?per_page=100`, "json")) ?? [];
+    for (const item of items) {
+      const text = `# ${htmlToText(item.title?.rendered)}\n${item.link}\n\n${htmlToText(item.content?.rendered)}`;
+      await fs.writeFile(path.join(out, `${type}-${item.slug}.txt`), text);
+    }
+    console.log(`${type}: ${items.length}`);
+  }
+
+  // Page builders often render outside the REST content, so keep the raw homepage text too.
+  for (const slug of ["", "about-us", "courses", "contact", "basic-course", "volume-course", "combo-course", "masterclass-course"]) {
+    const html = await get(`https://neolashpro.com/${slug}${slug ? "/" : ""}`);
+    if (!html) continue;
+    const body = html.replace(/<header[\s\S]*?<\/header>/gi, " ").replace(/<footer[\s\S]*?<\/footer>/gi, " ");
+    await fs.writeFile(path.join(out, `html-${slug || "home"}.txt`), htmlToText(body));
+  }
+}
+
 if (mode === "review") {
   await crawlSite();
   await unsplashReview();
+} else if (mode === "content") {
+  await siteContent();
 } else if (mode === "final") {
   await unsplashFinal();
 } else {
