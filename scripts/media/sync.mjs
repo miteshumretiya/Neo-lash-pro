@@ -4,6 +4,7 @@
 //
 //   node scripts/media/sync.mjs site     -> photos from the original site
 //   node scripts/media/sync.mjs stock    -> Unsplash contact sheets for review
+//   node scripts/media/sync.mjs pexels   -> Pexels contact sheets for review
 //   node scripts/media/sync.mjs content  -> original copy (products, pages, posts)
 //   node scripts/media/sync.mjs final    -> download picks from picks.json
 // Steps can be combined: "stock,content".
@@ -217,21 +218,86 @@ async function unsplashReview() {
   }
 }
 
+// -------------------------------------------------------------- Pexels review
+// Pexels' CDN is open to CI runners. Candidates come from known photo ids,
+// neighbouring ids of the lash shoots, and search pages when reachable.
+const PEXELS_IDS = [
+  7755523, 7755531, 256380, 7479587, 20623368, 21412169, 3154, 11503675, 1510634, 32039798,
+  8554941, 5128113, 3762664, 39351603, 29708266, 31129059, 13767162, 15569274, 7298680,
+  3373716, 19248753, 6567969,
+];
+const PEXELS_RANGES = [
+  [7755490, 7755570],
+  [8554925, 8554965],
+];
+const PEXELS_SEARCHES = ["st julian's", "malta coast", "valletta", "lash studio", "eyelash extensions", "beauty face", "brow"];
+
+const pexelsCdn = (id, file, w) =>
+  `https://images.pexels.com/photos/${id}/${file}?auto=compress&cs=tinysrgb&w=${w}`;
+
+async function pexelsUrl(ref, w) {
+  const [id, file] = String(ref).split("/");
+  const names = file ? [file] : [`pexels-photo-${id}.jpeg`, `pexels-photo-${id}.jpg`, `pexels-photo-${id}.png`];
+  for (const name of names) {
+    try {
+      const res = await fetch(pexelsCdn(id, name, w), { method: "HEAD", headers: UA });
+      if (res.ok && (res.headers.get("content-type") ?? "").startsWith("image")) return pexelsCdn(id, name, w);
+    } catch {}
+  }
+  return null;
+}
+
+async function pexelsReview() {
+  const groups = [{ name: "known", refs: PEXELS_IDS }];
+  for (const [from, to] of PEXELS_RANGES) {
+    groups.push({ name: `range-${from}`, refs: Array.from({ length: to - from }, (_, i) => from + i) });
+  }
+  for (const q of PEXELS_SEARCHES) {
+    const html = (await get(`https://www.pexels.com/search/${encodeURIComponent(q)}/`)) ?? "";
+    const refs = [
+      ...new Set([...html.matchAll(/images\.pexels\.com\/photos\/(\d+)\/([a-z0-9-]+\.(?:jpe?g|png))/gi)].map((m) => `${m[1]}/${m[2]}`)),
+    ];
+    console.log(`pexels search "${q}": ${refs.length}`);
+    if (refs.length) groups.push({ name: `q-${q.replace(/[^a-z0-9]+/gi, "-")}`, refs: refs.slice(0, 30) });
+  }
+  for (const group of groups) {
+    const tiles = [];
+    const info = [];
+    for (const ref of group.refs) {
+      const url = await pexelsUrl(ref, 420);
+      if (!url) continue;
+      const buffer = await get(url, "buffer");
+      if (!buffer) continue;
+      tiles.push({ buffer, label: tiles.length });
+      info.push({ i: info.length, ref: String(ref) });
+    }
+    console.log(`pexels ${group.name}: ${tiles.length}`);
+    for (let i = 0; i < tiles.length; i += 30) {
+      const slice = tiles.slice(i, i + 30);
+      await contactSheet(slice, path.join(REVIEW, `p-${group.name}-${i / 30}.jpg`), `pexels ${group.name} ${i}+`);
+    }
+    if (info.length) await fs.writeFile(path.join(REVIEW, `p-${group.name}.json`), JSON.stringify(info));
+  }
+}
+
 // ------------------------------------------------------------- final picks
 async function unsplashFinal() {
   const picks = JSON.parse(await fs.readFile(path.join(ROOT, "scripts/media/picks.json"), "utf8"));
   const credits = [];
   for (const [key, id] of Object.entries(picks)) {
-    const url = await freeImageUrl(id);
+    const url = id.startsWith("pexels:") ? await pexelsUrl(id.slice(7), 2400) : await freeImageUrl(id);
     if (!url) {
       console.warn("  ! not free or missing", id);
       continue;
     }
-    const buffer = await get(`${url}&w=2400&q=85`, "buffer");
+    const buffer = await get(id.startsWith("pexels:") ? url : `${url}&w=2400&q=85`, "buffer");
     if (!buffer) continue;
     const file = `stock/${key}.jpg`;
     const dims = await saveJpeg(buffer, path.join(MEDIA, file), 2400);
-    credits.push({ key, file, id, ...dims, link: `https://unsplash.com/photos/${id}` });
+    const link = id.startsWith("pexels:")
+      ? `https://www.pexels.com/photo/${id.slice(7).split("/")[0]}/`
+      : `https://unsplash.com/photos/${id}`;
+    credits.push({ key, file, source: id, ...dims, link });
     console.log("saved", file);
   }
   await fs.writeFile(path.join(MEDIA, "stock/credits.json"), JSON.stringify(credits, null, 2));
@@ -295,7 +361,7 @@ async function siteContent() {
   }
 }
 
-const steps = { site: crawlSite, stock: unsplashReview, content: siteContent, final: unsplashFinal };
+const steps = { site: crawlSite, stock: unsplashReview, pexels: pexelsReview, content: siteContent, final: unsplashFinal };
 const requested = mode === "review" ? ["site", "stock"] : mode.split(",");
 for (const step of requested) {
   if (!steps[step]) throw new Error(`Unknown mode ${step}`);
