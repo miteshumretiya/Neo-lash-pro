@@ -1,0 +1,51 @@
+name: Smoke test
+
+# Run from the Actions tab after a deploy: checks that the live site answers
+# publicly (no login wall) and that key pages render their content.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Site URL to check
+        required: true
+        default: https://neo-lash-pro.vercel.app
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check pages
+        env:
+          BASE: ${{ inputs.url }}
+        run: |
+          fail=0
+          check() {
+            path="$1"; want_status="$2"; want_text="$3"
+            out=$(curl -sS -L --max-time 30 -A "Mozilla/5.0 (smoke test)" -w '\n%{http_code}' "$BASE$path") || { echo "✗ $path — request failed"; fail=1; return; }
+            status=$(printf '%s' "$out" | tail -n1)
+            if [ "$status" != "$want_status" ]; then
+              echo "✗ $path — HTTP $status (expected $want_status)"; fail=1
+            elif [ -n "$want_text" ] && ! printf '%s' "$out" | grep -qF "$want_text"; then
+              echo "✗ $path — HTTP $status but missing \"$want_text\""; fail=1
+            else
+              echo "✓ $path — HTTP $status"
+            fi
+          }
+          check /                                   200 "Give your eyes"
+          check /shop                               200 "Neo Lash® Tweezers"
+          check /shop/neo-lash-tweezers             200 "Buy on WhatsApp"
+          check /courses                            200 "Basic Course"
+          check /courses/volume-course              200 "Volume Course"
+          check /about                              200 "Daniela"
+          check /journal                            200 "Aftercare"
+          check /journal/why-do-eyelash-extensions-fall 200 "lash shampoo"
+          check /contact                            200 "Triq Birkirkara"
+          check /wishlist                           200 ""
+          check /returns                            200 "14 days"
+          check /privacy                            200 "WhatsApp"
+          check /terms                              200 "laws of Malta"
+          check /sitemap.xml                        200 "/shop/neo-lash-tweezers"
+          check /robots.txt                         200 "Sitemap"
+          check /opengraph-image                    200 ""
+          check /this-page-does-not-exist           404 "fallen out"
+          exit $fail
