@@ -1,0 +1,54 @@
+# Downloads and optimises site photography into public/media and commits it.
+# Run manually from the Actions tab: mode "review" (site photos + Unsplash
+# contact sheets) or "final" (downloads the picks in scripts/media/picks.json).
+name: Media sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "review | final"
+        required: true
+        default: review
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Sync media
+        env:
+          MODE: ${{ inputs.mode }}
+        run: node scripts/media/sync.mjs "$MODE"
+
+      - name: Commit media
+        env:
+          MODE: ${{ inputs.mode }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A public/media
+          if [ -d .media-review ]; then git add -A .media-review; fi
+          if git diff --cached --quiet; then
+            echo "No media changes"
+            exit 0
+          fi
+          git commit -m "chore(media): sync $MODE assets"
+          git push origin "HEAD:$BRANCH"
