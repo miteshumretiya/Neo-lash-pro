@@ -1,15 +1,15 @@
 # Downloads and optimises site photography into public/media and commits it.
-# Run manually from the Actions tab: mode "review" (site photos + Unsplash
-# contact sheets) or "final" (downloads the picks in scripts/media/picks.json).
+# Run manually from the Actions tab with a mode: "site", "stock", "content",
+# "final" (downloads the picks in scripts/media/picks.json) or a comma list.
 name: Media sync
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "review | final"
+        description: "site | stock | content | final (comma separated)"
         required: true
-        default: review
+        default: final
 
 permissions:
   contents: write
@@ -51,4 +51,5 @@ jobs:
             exit 0
           fi
           git commit -m "chore(media): sync $MODE assets"
+          git pull --rebase origin "$BRANCH"
           git push origin "HEAD:$BRANCH"
